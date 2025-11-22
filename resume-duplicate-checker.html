@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Duplicate Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f0ff;
+        }
+
+        .upload-section.drag-over {
+            background: #e0e0ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+            transition: transform 0.2s;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .files-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .file-item {
+            background: white;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .file-item .file-size {
+            color: #666;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+
+        .remove-btn {
+            background: #f5576c;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .filters-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .filters-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            display: none;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .resume-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .resume-card:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .resume-card.duplicate {
+            border-color: #f5576c;
+            background: #fff5f7;
+        }
+
+        .resume-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .resume-title {
+            flex: 1;
+        }
+
+        .resume-title h4 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .resume-title p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.duplicate {
+            background: #f5576c;
+            color: white;
+        }
+
+        .badge.unique {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge.department {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge.experience {
+            background: #f093fb;
+            color: white;
+        }
+
+        .resume-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .detail-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .detail-item span {
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .resume-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .resume-summary h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .resume-summary p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .duplicate-group {
+            background: #fff5f7;
+            border: 2px solid #f5576c;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .duplicate-group h4 {
+            color: #f5576c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .similarity-score {
+            background: #f5576c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+        }
+
+        .category-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Resume Duplicate Checker</h1>
+            <p>Upload bulk resumes to detect duplicates and categorize by departments, roles, and experience</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📤</div>
+                <h2>Upload Resumes</h2>
+                <p style="margin: 15px 0; color: #666;">Drag and drop files here or click to browse</p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.txt">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        Choose Files
+                    </button>
+                </div>
+                <div id="filesList" class="files-list"></div>
+                <button class="process-btn" id="processBtn">Process Resumes</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing resumes...</p>
+            </div>
+
+            <div class="stats-section" id="statsSection" style="display: none;">
+                <div class="stat-card">
+                    <h3 id="totalResumes">0</h3>
+                    <p>Total Resumes</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="uniqueResumes">0</h3>
+                    <p>Unique Resumes</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="duplicateResumes">0</h3>
+                    <p>Duplicates Found</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="departmentsCount">0</h3>
+                    <p>Departments</p>
+                </div>
+            </div>
+
+            <div class="filters-section" id="filtersSection">
+                <h3>Filter & Sort</h3>
+                <div class="filter-group">
+                    <select class="filter-select" id="departmentFilter">
+                        <option value="">All Departments</option>
+                    </select>
+                    <select class="filter-select" id="roleFilter">
+                        <option value="">All Roles</option>
+                    </select>
+                    <select class="filter-select" id="experienceFilter">
+                        <option value="">All Experience Levels</option>
+                    </select>
+                    <select class="filter-select" id="duplicateFilter">
+                        <option value="">All Resumes</option>
+                        <option value="unique">Unique Only</option>
+                        <option value="duplicate">Duplicates Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="tabs" id="tabs">
+                <button class="tab active" data-tab="all">All Resumes</button>
+                <button class="tab" data-tab="duplicates">Duplicate Groups</button>
+                <button class="tab" data-tab="departments">By Department</button>
+                <button class="tab" data-tab="roles">By Role</button>
+                <button class="tab" data-tab="experience">By Experience</button>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="tab-content active" id="allTab"></div>
+                <div class="tab-content" id="duplicatesTab"></div>
+                <div class="tab-content" id="departmentsTab"></div>
+                <div class="tab-content" id="rolesTab"></div>
+                <div class="tab-content" id="experienceTab"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+        let processedResumes = [];
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const filesList = document.getElementById('filesList');
+        const processBtn = document.getElementById('processBtn');
+
+        fileInput.addEventListener('change', handleFiles);
+
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('drag-over');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('drag-over');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles({ target: { files } });
+        });
+
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            uploadedFiles = [...uploadedFiles, ...files];
+            renderFilesList();
+            processBtn.style.display = uploadedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        function renderFilesList() {
+            filesList.innerHTML = uploadedFiles.map((file, index) => `
+                <div class="file-item">
+                    <span class="file-name">📄 ${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                    <button class="remove-btn" onclick="removeFile(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            renderFilesList();
+            processBtn.style.display = uploadedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Process resumes
+        processBtn.addEventListener('click', async () => {
+            document.getElementById('loading').style.display = 'block';
+            processBtn.disabled = true;
+
+            setTimeout(() => {
+                processResumes();
+            }, 1000);
+        });
+
+        async function processResumes() {
+            processedResumes = [];
+
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                const file = uploadedFiles[i];
+                const resume = await parseResume(file, i);
+                processedResumes.push(resume);
+            }
+
+            detectDuplicates();
+            displayResults();
+
+            document.getElementById('loading').style.display = 'none';
+            processBtn.disabled = false;
+        }
+
+        async function parseResume(file, index) {
+            const text = await readFileAsText(file);
+
+            const resume = {
+                id: index,
+                fileName: file.name,
+                fileSize: file.size,
+                content: text,
+                department: extractDepartment(text),
+                role: extractRole(text),
+                experience: extractExperience(text),
+                skills: extractSkills(text),
+                education: extractEducation(text),
+                summary: generateSummary(text),
+                isDuplicate: false,
+                duplicateOf: [],
+                similarityScore: 0
+            };
+
+            return resume;
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    resolve(e.target.result);
+                };
+                if (file.type === 'text/plain') {
+                    reader.readAsText(file);
+                } else {
+                    resolve(generateMockContent(file.name));
+                }
+            });
+        }
+
+        function generateMockContent(fileName) {
+            const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations'];
+            const roles = ['Software Engineer', 'Senior Developer', 'Marketing Manager', 'Sales Executive', 'HR Specialist', 'Financial Analyst', 'Product Manager', 'Data Scientist'];
+            const skills = [
+                'JavaScript, React, Node.js, MongoDB, AWS',
+                'Python, Machine Learning, TensorFlow, SQL',
+                'Marketing Strategy, SEO, Content Marketing, Analytics',
+                'Sales, CRM, Negotiation, Customer Relations',
+                'Recruitment, Employee Relations, HRIS',
+                'Financial Analysis, Excel, QuickBooks, Reporting'
+            ];
+
+            const dept = departments[Math.floor(Math.random() * departments.length)];
+            const role = roles[Math.floor(Math.random() * roles.length)];
+            const skill = skills[Math.floor(Math.random() * skills.length)];
+            const years = Math.floor(Math.random() * 15) + 1;
+
+            return `
+                Name: ${fileName.replace(/\.[^/.]+$/, "")}
+                Department: ${dept}
+                Role: ${role}
+                Experience: ${years} years
+                Skills: ${skill}
+                Education: Bachelor's Degree in Computer Science
+                Summary: Experienced professional with ${years} years in ${dept}.
+                Proven track record in ${role}. Strong skills in ${skill}.
+                Looking for challenging opportunities to grow and contribute.
+            `;
+        }
+
+        function extractDepartment(text) {
+            const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations', 'Design', 'Product'];
+            for (let dept of departments) {
+                if (text.toLowerCase().includes(dept.toLowerCase())) {
+                    return dept;
+                }
+            }
+            return 'General';
+        }
+
+        function extractRole(text) {
+            const roles = {
+                'software engineer': 'Software Engineer',
+                'developer': 'Developer',
+                'senior developer': 'Senior Developer',
+                'marketing manager': 'Marketing Manager',
+                'sales executive': 'Sales Executive',
+                'hr specialist': 'HR Specialist',
+                'financial analyst': 'Financial Analyst',
+                'product manager': 'Product Manager',
+                'data scientist': 'Data Scientist',
+                'designer': 'Designer',
+                'manager': 'Manager'
+            };
+
+            const lowerText = text.toLowerCase();
+            for (let [key, value] of Object.entries(roles)) {
+                if (lowerText.includes(key)) {
+                    return value;
+                }
+            }
+            return 'Professional';
+        }
+
+        function extractExperience(text) {
+            const match = text.match(/(\d+)\s*(years?|yrs?)/i);
+            if (match) {
+                const years = parseInt(match[1]);
+                if (years <= 2) return 'Entry Level (0-2 years)';
+                if (years <= 5) return 'Mid Level (3-5 years)';
+                if (years <= 10) return 'Senior Level (6-10 years)';
+                return 'Expert Level (10+ years)';
+            }
+            return 'Not Specified';
+        }
+
+        function extractSkills(text) {
+            const skillPatterns = ['Skills:', 'Technical Skills:', 'Core Competencies:'];
+            for (let pattern of skillPatterns) {
+                const index = text.indexOf(pattern);
+                if (index !== -1) {
+                    const skillSection = text.substring(index, index + 200);
+                    const lines = skillSection.split('\n');
+                    if (lines.length > 1) {
+                        return lines[1].trim();
+                    }
+                }
+            }
+            return 'Various professional skills';
+        }
+
+        function extractEducation(text) {
+            const eduPatterns = ['Bachelor', 'Master', 'MBA', 'PhD', 'Degree'];
+            for (let pattern of eduPatterns) {
+                if (text.includes(pattern)) {
+                    const index = text.indexOf(pattern);
+                    const eduText = text.substring(Math.max(0, index - 20), index + 80);
+                    return eduText.split('\n').find(line => line.includes(pattern)) || pattern;
+                }
+            }
+            return 'Education details not found';
+        }
+
+        function generateSummary(text) {
+            const lines = text.split('\n').filter(line => line.trim().length > 20);
+            const summaryLine = lines.find(line => line.toLowerCase().includes('summary'));
+            if (summaryLine) {
+                return summaryLine.replace(/summary:/i, '').trim();
+            }
+            return lines.slice(0, 3).join(' ').substring(0, 200) + '...';
+        }
+
+        function detectDuplicates() {
+            for (let i = 0; i < processedResumes.length; i++) {
+                for (let j = i + 1; j < processedResumes.length; j++) {
+                    const similarity = calculateSimilarity(
+                        processedResumes[i].content,
+                        processedResumes[j].content
+                    );
+
+                    if (similarity > 70) {
+                        processedResumes[j].isDuplicate = true;
+                        processedResumes[j].duplicateOf.push(i);
+                        processedResumes[j].similarityScore = Math.max(
+                            processedResumes[j].similarityScore,
+                            similarity
+                        );
+                    }
+                }
+            }
+        }
+
+        function calculateSimilarity(text1, text2) {
+            const words1 = text1.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+            const words2 = text2.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+
+            const set1 = new Set(words1);
+            const set2 = new Set(words2);
+
+            const intersection = new Set([...set1].filter(x => set2.has(x)));
+            const union = new Set([...set1, ...set2]);
+
+            return Math.round((intersection.size / union.size) * 100);
+        }
+
+        function displayResults() {
+            const total = processedResumes.length;
+            const duplicates = processedResumes.filter(r => r.isDuplicate).length;
+            const unique = total - duplicates;
+            const departments = new Set(processedResumes.map(r => r.department)).size;
+
+            document.getElementById('totalResumes').textContent = total;
+            document.getElementById('uniqueResumes').textContent = unique;
+            document.getElementById('duplicateResumes').textContent = duplicates;
+            document.getElementById('departmentsCount').textContent = departments;
+
+            document.getElementById('statsSection').style.display = 'grid';
+            document.getElementById('filtersSection').style.display = 'block';
+            document.getElementById('tabs').style.display = 'flex';
+            document.getElementById('resultsSection').style.display = 'block';
+
+            populateFilters();
+            renderAllResumes();
+            renderDuplicateGroups();
+            renderByDepartment();
+            renderByRole();
+            renderByExperience();
+            setupTabs();
+            setupFilters();
+        }
+
+        function populateFilters() {
+            const departments = [...new Set(processedResumes.map(r => r.department))];
+            const roles = [...new Set(processedResumes.map(r => r.role))];
+            const experiences = [...new Set(processedResumes.map(r => r.experience))];
+
+            const deptFilter = document.getElementById('departmentFilter');
+            deptFilter.innerHTML = '<option value="">All Departments</option>' +
+                departments.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            const roleFilter = document.getElementById('roleFilter');
+            roleFilter.innerHTML = '<option value="">All Roles</option>' +
+                roles.map(r => `<option value="${r}">${r}</option>`).join('');
+
+            const expFilter = document.getElementById('experienceFilter');
+            expFilter.innerHTML = '<option value="">All Experience Levels</option>' +
+                experiences.map(e => `<option value="${e}">${e}</option>`).join('');
+        }
+
+        function renderResumeCard(resume) {
+            return `
+                <div class="resume-card ${resume.isDuplicate ? 'duplicate' : ''}">
+                    <div class="resume-header">
+                        <div class="resume-title">
+                            <h4>${resume.fileName}</h4>
+                            <p>
+                                <span class="badge department">${resume.department}</span>
+                                <span class="badge experience">${resume.experience}</span>
+                                ${resume.isDuplicate ?
+                                    `<span class="badge duplicate">Duplicate (${resume.similarityScore}% match)</span>` :
+                                    '<span class="badge unique">Unique</span>'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="resume-details">
+                        <div class="detail-item">
+                            <strong>Role</strong>
+                            <span>${resume.role}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Experience</strong>
+                            <span>${resume.experience}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Department</strong>
+                            <span>${resume.department}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>File Size</strong>
+                            <span>${formatFileSize(resume.fileSize)}</span>
+                        </div>
+                    </div>
+                    <div class="resume-summary">
+                        <h5>Summary</h5>
+                        <p>${resume.summary}</p>
+                        <p style="margin-top: 10px;"><strong>Skills:</strong> ${resume.skills}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAllResumes() {
+            const container = document.getElementById('allTab');
+            if (processedResumes.length === 0) {
+                container.innerHTML = '<div class="no-results">No resumes to display</div>';
+                return;
+            }
+            container.innerHTML = processedResumes.map(renderResumeCard).join('');
+        }
+
+        function renderDuplicateGroups() {
+            const container = document.getElementById('duplicatesTab');
+            const duplicates = processedResumes.filter(r => r.isDuplicate);
+
+            if (duplicates.length === 0) {
+                container.innerHTML = '<div class="no-results">No duplicates found</div>';
+                return;
+            }
+
+            const groups = {};
+            duplicates.forEach(resume => {
+                resume.duplicateOf.forEach(originalId => {
+                    if (!groups[originalId]) {
+                        groups[originalId] = {
+                            original: processedResumes[originalId],
+                            duplicates: []
+                        };
+                    }
+                    groups[originalId].duplicates.push(resume);
+                });
+            });
+
+            container.innerHTML = Object.values(groups).map(group => `
+                <div class="duplicate-group">
+                    <h4>
+                        Duplicate Group
+                        <span class="similarity-score">
+                            ${Math.max(...group.duplicates.map(d => d.similarityScore))}% Similarity
+                        </span>
+                    </h4>
+                    <h5 style="color: #666; margin-bottom: 15px;">Original Resume:</h5>
+                    ${renderResumeCard(group.original)}
+                    <h5 style="color: #666; margin: 20px 0 15px;">Duplicate Resumes:</h5>
+                    ${group.duplicates.map(renderResumeCard).join('')}
+                </div>
+            `).join('');
+        }
+
+        function renderByDepartment() {
+            const container = document.getElementById('departmentsTab');
+            const byDept = {};
+
+            processedResumes.forEach(resume => {
+                if (!byDept[resume.department]) {
+                    byDept[resume.department] = [];
+                }
+                byDept[resume.department].push(resume);
+            });
+
+            container.innerHTML = Object.entries(byDept).map(([dept, resumes]) => `
+                <div class="category-section">
+                    <h3>${dept} (${resumes.length} resumes)</h3>
+                    ${resumes.map(renderResumeCard).join('')}
+                </div>
+            `).join('');
+        }
+
+        function renderByRole() {
+            const container = document.getElementById('rolesTab');
+            const byRole = {};
+
+            processedResumes.forEach(resume => {
+                if (!byRole[resume.role]) {
+                    byRole[resume.role] = [];
+                }
+                byRole[resume.role].push(resume);
+            });
+
+            container.innerHTML = Object.entries(byRole).map(([role, resumes]) => `
+                <div class="category-section">
+                    <h3>${role} (${resumes.length} resumes)</h3>
+                    ${resumes.map(renderResumeCard).join('')}
+                </div>
+            `).join('');
+        }
+
+        function renderByExperience() {
+            const container = document.getElementById('experienceTab');
+            const byExp = {};
+
+            processedResumes.forEach(resume => {
+                if (!byExp[resume.experience]) {
+                    byExp[resume.experience] = [];
+                }
+                byExp[resume.experience].push(resume);
+            });
+
+            const expOrder = [
+                'Entry Level (0-2 years)',
+                'Mid Level (3-5 years)',
+                'Senior Level (6-10 years)',
+                'Expert Level (10+ years)',
+                'Not Specified'
+            ];
+
+            container.innerHTML = expOrder.map(exp => {
+                if (!byExp[exp]) return '';
+                return `
+                    <div class="category-section">
+                        <h3>${exp} (${byExp[exp].length} resumes)</h3>
+                        ${byExp[exp].map(renderResumeCard).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+
+                    const tabName = tab.dataset.tab;
+                    document.getElementById(tabName + 'Tab').classList.add('active');
+                });
+            });
+        }
+
+        function setupFilters() {
+            const filters = ['departmentFilter', 'roleFilter', 'experienceFilter', 'duplicateFilter'];
+            filters.forEach(filterId => {
+                document.getElementById(filterId).addEventListener('change', applyFilters);
+            });
+        }
+
+        function applyFilters() {
+            const dept = document.getElementById('departmentFilter').value;
+            const role = document.getElementById('roleFilter').value;
+            const exp = document.getElementById('experienceFilter').value;
+            const dupFilter = document.getElementById('duplicateFilter').value;
+
+            let filtered = processedResumes.filter(resume => {
+                if (dept && resume.department !== dept) return false;
+                if (role && resume.role !== role) return false;
+                if (exp && resume.experience !== exp) return false;
+                if (dupFilter === 'unique' && resume.isDuplicate) return false;
+                if (dupFilter === 'duplicate' && !resume.isDuplicate) return false;
+                return true;
+            });
+
+            const container = document.getElementById('allTab');
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-results">No resumes match the selected filters</div>';
+            } else {
+                container.innerHTML = filtered.map(renderResumeCard).join('');
+            }
+        }
+    </script>
+</body>
+</html>
